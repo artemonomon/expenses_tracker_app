@@ -9,6 +9,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  path: ^1.8.3
+  provider: ^6.1.1
+  sqflite: ^2.3.0
+  dot_navigation_bar:
+
 
 dev_dependencies:
   flutter_test:
