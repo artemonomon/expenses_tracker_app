@@ -7,39 +7,44 @@ class ExpensesAppDb {
   final incomeTableName = 'income';
   final personalAccountsTableName = 'personal_accounts';
   final usersTableName = 'users';
+  final categoriesTableName = 'categories';
 
   Future<void> createDatabase(Database db) async {
     await db.execute('''
       CREATE TABLE IF NOT EXISTS $expensesTableName(
-        id TEXT PRIMARY KEY,
-        name TEXT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
         amount REAL,
         date TEXT,
-        personal_account_id TEXT,
+        personal_account_id INTEGER,
+        category TEXT,
         FOREIGN KEY(personal_account_id) REFERENCES $personalAccountsTableName(id)
       )
     ''');
     await db.execute('''
-      CREATE TABLE $incomeTableName(
-        id TEXT PRIMARY KEY,
-        name TEXT,
+      CREATE TABLE IF NOT EXISTS $incomeTableName(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT,
         amount REAL,
         date TEXT,
-        personal_account_id TEXT,
+        personal_account_id INTEGER,
+        category TEXT,
         FOREIGN KEY(personal_account_id) REFERENCES $personalAccountsTableName(id)
       )
     ''');
     await db.execute('''
-      CREATE TABLE $personalAccountsTableName(
-        id TEXT PRIMARY KEY,
+      CREATE TABLE IF NOT EXISTS $personalAccountsTableName(
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
         user_id INTEGER,
         balance REAL,
+        currency TEXT,
+        category TEXT,
         FOREIGN KEY(user_id) REFERENCES $usersTableName(id)
       )
     ''');
     await db.execute('''
-      CREATE TABLE $usersTableName(
+      CREATE TABLE IF NOT EXISTS $usersTableName(
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT
       )
@@ -80,6 +85,7 @@ class ExpensesAppDb {
           balance: 0.0, // Replace with the actual balance
         ),
         date: DateTime.parse(maps[i]['date']),
+        category: maps[i]['category'],
       );
     });
   }
@@ -90,7 +96,7 @@ class ExpensesAppDb {
     return List.generate(maps.length, (i) {
       return Income(
         id: maps[i]['id'],
-        name: maps[i]['name'],
+        title: maps[i]['title'],
         amount: maps[i]['amount'],
         personalAccount: PersonalAccount(
           id: maps[i]['personal_account_id'],
@@ -98,6 +104,7 @@ class ExpensesAppDb {
           balance: 0.0, // Replace with the actual balance
         ),
         date: DateTime.parse(maps[i]['date']),
+        category: maps[i]['category'],
       );
     });
   }
@@ -111,6 +118,8 @@ class ExpensesAppDb {
         id: maps[i]['id'],
         name: maps[i]['name'],
         balance: maps[i]['balance'],
+        currency: maps[i]['currency'],
+        category: maps[i]['category'],
       );
     });
   }
@@ -163,7 +172,7 @@ class ExpensesAppDb {
     );
   }
 
-  Future<void> deletePersonalAccount(String personalAccountId) async {
+  Future<void> deletePersonalAccount(int personalAccountId) async {
     final db = await DatabaseService().database;
     await db.delete(
       personalAccountsTableName,

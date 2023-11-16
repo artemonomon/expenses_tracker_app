@@ -1,12 +1,12 @@
 import 'package:expenses_tracker_app/models/models.dart';
 
 class User {
-  int id;
+  int? id;
   String name;
   List<PersonalAccount> personalAccounts;
 
   User({
-    required this.id,
+    this.id,
     required this.name,
     required this.personalAccounts,
   });

@@ -12,7 +12,8 @@ dependencies:
   path: ^1.8.3
   provider: ^6.1.1
   sqflite: ^2.3.0
-  dot_navigation_bar:
+  fl_chart: ^0.64.0
+  dot_navigation_bar: ^1.0.2
 
 
 dev_dependencies:

@@ -1,4 +1,4 @@
-import 'package:dot_navigation_bar/dot_navigation_bar.dart';
+import 'package:expenses_tracker_app/database/database.dart';
 import 'package:expenses_tracker_app/screens/screens.dart';
 import 'package:flutter/material.dart';
 
@@ -23,34 +23,43 @@ class _MainAppState extends State<MainApp> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Initialize database
+    DatabaseService databaseService = DatabaseService();
+    databaseService.database;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Трекер витрат',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
       ),
       home: Scaffold(
-          body: _screens[_currentIndex],
-          extendBody: true,
-          bottomNavigationBar: DotNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) => setState(() => _currentIndex = index),
-            items: [
-              DotNavigationBarItem(
-                icon: const Icon(Icons.home),
-                selectedColor: Colors.deepPurple,
-              ),
-              DotNavigationBarItem(
-                icon: const Icon(Icons.account_balance_wallet),
-                selectedColor: Colors.deepPurple,
-              ),
-              DotNavigationBarItem(
-                icon: const Icon(Icons.person),
-                selectedColor: Colors.deepPurple,
-              ),
-            ],
-          )),
+        body: _screens[_currentIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          elevation: 0,
+          currentIndex: _currentIndex,
+          onTap: (index) => setState(() => _currentIndex = index),
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              label: 'Головна',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.account_balance_wallet),
+              label: 'Мої рахунки',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person),
+              label: 'Профіль',
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

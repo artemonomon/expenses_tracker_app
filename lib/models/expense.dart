@@ -1,18 +1,20 @@
 import 'package:expenses_tracker_app/models/models.dart';
 
 class Expense {
-  String id;
+  int? id;
   String title;
   double amount;
   PersonalAccount personalAccount;
+  String category;
   DateTime date;
 
   Expense({
-    required this.id,
+    this.id,
     required this.title,
     required this.amount,
     required this.personalAccount,
     required this.date,
+    required this.category,
   });
 
   Map<String, dynamic> toMap() {
@@ -22,6 +24,7 @@ class Expense {
       'amount': amount,
       'personal_account_id': personalAccount.id,
       'date': date.toIso8601String(),
+      'category': category,
     };
   }
 }
