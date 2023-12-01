@@ -19,7 +19,6 @@ class _MainAppState extends State<MainApp> {
   final List<Widget> _screens = const [
     MainScreen(),
     PersonalAccountsScreen(),
-    ProfileScreen(),
   ];
 
   @override
@@ -52,10 +51,6 @@ class _MainAppState extends State<MainApp> {
             BottomNavigationBarItem(
               icon: Icon(Icons.account_balance_wallet),
               label: 'Мої рахунки',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(Icons.person),
-              label: 'Профіль',
             ),
           ],
         ),

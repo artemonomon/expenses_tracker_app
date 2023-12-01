@@ -61,12 +61,12 @@ class ExpensesRepository extends AbstractExpensesRepository {
   }
 
   @override
-  Future<void> deleteExpense(String expenseId) async {
+  Future<void> deleteExpense(int expenseId) async {
     await _expensesDb.deleteExpense(expenseId);
   }
 
   @override
-  Future<void> deleteIncome(String incomeId) async {
+  Future<void> deleteIncome(int incomeId) async {
     await _expensesDb.deleteIncome(incomeId);
   }
 

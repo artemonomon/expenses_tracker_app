@@ -13,7 +13,7 @@ abstract class AbstractExpensesRepository {
   Future<void> updateExpense(Expense expense);
   Future<void> updateIncome(Income income);
   Future<void> updatePersonalAccount(PersonalAccount personalAccount);
-  Future<void> deleteExpense(String expenseId);
-  Future<void> deleteIncome(String incomeId);
+  Future<void> deleteExpense(int expenseId);
+  Future<void> deleteIncome(int incomeId);
   Future<void> deletePersonalAccount(int personalAccountId);
 }

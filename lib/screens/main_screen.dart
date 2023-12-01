@@ -1,11 +1,10 @@
-import 'dart:math';
-
 import 'package:expenses_tracker_app/database/database.dart';
 import 'package:expenses_tracker_app/models/models.dart';
 import 'package:expenses_tracker_app/screens/screens.dart';
 import 'package:expenses_tracker_app/widgets/floating_action_btn.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:line_icons/line_icons.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -24,7 +23,6 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     expenses = fetchExpenses();
     incomes = fetchIncomes();
@@ -52,15 +50,25 @@ class _MainScreenState extends State<MainScreen> {
     );
   }
 
-  Color _generateRandomColor() {
-    final Random random = Random();
-    return Color.fromRGBO(
-      random.nextInt(256),
-      random.nextInt(256),
-      random.nextInt(256),
-      1.0,
-    );
-  }
+  Map<String, CategoryInfo> expenseCategoryInfo = {
+    'Харчування': CategoryInfo(Colors.red, LineIcons.utensils),
+    'Транспорт': CategoryInfo(Colors.blue, Icons.directions_car),
+    'Розваги': CategoryInfo(Colors.green, LineIcons.gamepad),
+    'Одяг': CategoryInfo(Colors.orange, LineIcons.tShirt),
+    'Подарунок': CategoryInfo(Colors.purple, LineIcons.gift),
+    'Побут': CategoryInfo(Colors.pink, LineIcons.home),
+    'Здоров\'я': CategoryInfo(Colors.teal, LineIcons.heartbeat),
+    'Комунальні послуги': CategoryInfo(Colors.yellow, LineIcons.lightbulb),
+    'Інше': CategoryInfo(Colors.grey, LineIcons.question),
+    // Add other categories with their corresponding colors and icons
+  };
+
+  Map<String, CategoryInfo> incomeCategoryInfo = {
+    'Зарплата': CategoryInfo(Colors.green, LineIcons.moneyBill),
+    'Подарунок': CategoryInfo(Colors.blue, LineIcons.gifts),
+    'Позика': CategoryInfo(Colors.orange, LineIcons.handHoldingUsDollar),
+    'Інше': CategoryInfo(Colors.grey, LineIcons.question),
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -126,6 +134,7 @@ class _MainScreenState extends State<MainScreen> {
                 borderRadius: BorderRadius.circular(10),
                 color: Colors.white,
               ),
+              width: double.infinity,
               margin: const EdgeInsets.only(
                   bottom: 10, right: 10, left: 10, top: 5),
               padding: const EdgeInsets.all(50),
@@ -138,9 +147,9 @@ class _MainScreenState extends State<MainScreen> {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator();
                       } else if (snapshot.hasError) {
-                        return Text('Error: ${snapshot.error}');
+                        return Text('Помилка: ${snapshot.error}');
                       } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return const Text('No data available.');
+                        return const Expanded(child: Text('Немає даних'));
                       } else {
                         List data = snapshot.data as List;
 
@@ -150,8 +159,11 @@ class _MainScreenState extends State<MainScreen> {
                               data.length,
                               (index) {
                                 var item = data[index];
+                                var categoryInfo = showExpenses
+                                    ? expenseCategoryInfo[item.category]
+                                    : incomeCategoryInfo[item.category];
                                 return PieChartSectionData(
-                                  color: _generateRandomColor(),
+                                  color: categoryInfo?.color ?? Colors.grey,
                                   value: item.amount,
                                   radius: 50,
                                   showTitle: false,
@@ -174,7 +186,7 @@ class _MainScreenState extends State<MainScreen> {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator();
                       } else if (snapshot.hasError) {
-                        return Text('Error: ${snapshot.error}');
+                        return Text('Помилка: ${snapshot.error}');
                       } else if (!snapshot.hasData) {
                         return const Text('Немає даних');
                       } else {
@@ -186,7 +198,7 @@ class _MainScreenState extends State<MainScreen> {
                         return Text(
                           showExpenses
                               ? '-${totalExpenses.toStringAsFixed(2)} UAH'
-                              : '+${totalIncomes.toStringAsFixed(2)} UAH', // Replace with your actual total value
+                              : '+${totalIncomes.toStringAsFixed(2)} UAH',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 18,
@@ -206,9 +218,9 @@ class _MainScreenState extends State<MainScreen> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const CircularProgressIndicator();
               } else if (snapshot.hasError) {
-                return Text('Error: ${snapshot.error}');
+                return Text('Помилка: ${snapshot.error}');
               } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Text('No data available.');
+                return const Text('Немає даних');
               } else {
                 List data = snapshot.data as List;
 
@@ -234,6 +246,17 @@ class _MainScreenState extends State<MainScreen> {
                               fontSize: 18,
                             ),
                           ),
+                          leading: CircleAvatar(
+                            backgroundColor: showExpenses
+                                ? expenseCategoryInfo[item.category]?.color
+                                : incomeCategoryInfo[item.category]?.color,
+                            child: Icon(
+                              showExpenses
+                                  ? expenseCategoryInfo[item.category]?.icon
+                                  : incomeCategoryInfo[item.category]?.icon,
+                              color: Colors.white,
+                            ),
+                          ),
                           subtitle: Text(
                               showExpenses ? item.category : item.category),
                           trailing: Text(
@@ -245,8 +268,23 @@ class _MainScreenState extends State<MainScreen> {
                               fontSize: 16,
                             ),
                           ),
-                          onTap: () {
-                            // Handle onTap as needed
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddActionScreen(
+                                  expenseToEdit: showExpenses ? item : null,
+                                  incomeToEdit: showExpenses ? null : item,
+                                ),
+                              ),
+                            );
+
+                            if (result == true) {
+                              setState(() {
+                                expenses = fetchExpenses();
+                                incomes = fetchIncomes();
+                              });
+                            }
                           },
                         );
                       },

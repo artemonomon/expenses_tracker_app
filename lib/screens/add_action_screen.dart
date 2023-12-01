@@ -1,12 +1,24 @@
-import 'package:expenses_tracker_app/models/expense.dart';
-import 'package:expenses_tracker_app/models/income.dart';
 import 'package:expenses_tracker_app/models/models.dart';
 import 'package:flutter/material.dart';
 
 import '../database/database.dart';
 
+class CategoryInfo {
+  final Color color;
+  final IconData icon;
+
+  CategoryInfo(this.color, this.icon);
+}
+
 class AddActionScreen extends StatefulWidget {
-  const AddActionScreen({super.key});
+  final Expense? expenseToEdit;
+  final Income? incomeToEdit;
+
+  const AddActionScreen({
+    super.key,
+    this.expenseToEdit,
+    this.incomeToEdit,
+  });
 
   @override
   State<AddActionScreen> createState() => _AddActionScreenState();
@@ -44,6 +56,21 @@ class _AddActionScreenState extends State<AddActionScreen> {
   void initState() {
     super.initState();
     fetchAccounts();
+    if (widget.expenseToEdit != null) {
+      // Editing an expense
+      actionType = 'Витрати';
+      selectedAccount = widget.expenseToEdit!.personalAccount;
+      selectedExpenseCategory = widget.expenseToEdit!.category;
+      titleController.text = widget.expenseToEdit!.title;
+      amountController.text = widget.expenseToEdit!.amount.toString();
+    } else if (widget.incomeToEdit != null) {
+      // Editing an income
+      actionType = 'Дохід';
+      selectedAccount = widget.incomeToEdit!.personalAccount;
+      selectedIncomeCategory = widget.incomeToEdit!.category;
+      titleController.text = widget.incomeToEdit!.title;
+      amountController.text = widget.incomeToEdit!.amount.toString();
+    }
   }
 
   Future<void> fetchAccounts() async {
@@ -58,8 +85,53 @@ class _AddActionScreenState extends State<AddActionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Додати ${actionType.toLowerCase()}'),
+        title: Text(widget.expenseToEdit != null || widget.incomeToEdit != null
+            ? 'Редагувати ${actionType.toLowerCase()}'
+            : 'Додати ${actionType.toLowerCase()}'),
         centerTitle: true,
+        actions: [
+          if (widget.expenseToEdit != null || widget.incomeToEdit != null)
+            IconButton(
+              icon: Icon(Icons.delete),
+              onPressed: () {
+                // Show a confirmation dialog before deleting
+                showDialog(
+                  context: context,
+                  builder: (BuildContext context) {
+                    return AlertDialog(
+                      title: Text('Ви впевнені, що хочете видалити?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop(); // Close the dialog
+                          },
+                          child: Text('Ні'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            // Perform the delete operation
+                            if (widget.expenseToEdit != null) {
+                              await expensesDb
+                                  .deleteExpense(widget.expenseToEdit!.id!);
+                              Navigator.pop(context, true);
+                            } else if (widget.incomeToEdit != null) {
+                              await expensesDb
+                                  .deleteIncome(widget.incomeToEdit!.id!);
+                              Navigator.pop(context, true);
+                            }
+
+                            // Navigate back to the previous screen after deleting
+                            Navigator.pop(context, true);
+                          },
+                          child: Text('Так'),
+                        ),
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -170,29 +242,53 @@ class _AddActionScreenState extends State<AddActionScreen> {
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () async {
-                // Add your logic to save the expense/income
-                // You can access the entered data using titleController.text, amountController.text, etc.
-                // Create an ExpenseAction or IncomeAction object based on the selected actionType
-                if (actionType == 'Витрати') {
-                  // Save expense
-                  await expensesDb.insertExpense(
+                if (widget.expenseToEdit != null) {
+                  // Editing an expense
+                  await expensesDb.updateExpense(
                     Expense(
+                      id: widget.expenseToEdit!.id,
+                      title: titleController.text,
+                      amount: double.tryParse(amountController.text) ?? 0.0,
+                      category: selectedExpenseCategory,
+                      date: widget.expenseToEdit!.date,
+                      personalAccount: selectedAccount!,
+                    ),
+                  );
+                } else if (widget.incomeToEdit != null) {
+                  // Editing an income
+                  await expensesDb.updateIncome(
+                    Income(
+                      id: widget.incomeToEdit!.id,
+                      title: titleController.text,
+                      amount: double.tryParse(amountController.text) ?? 0.0,
+                      date: widget.incomeToEdit!.date,
+                      category: selectedIncomeCategory,
+                      personalAccount: selectedAccount!,
+                    ),
+                  );
+                } else {
+                  // Adding a new expense or income
+                  if (actionType == 'Витрати') {
+                    await expensesDb.insertExpense(
+                      Expense(
                         title: titleController.text,
                         amount: double.tryParse(amountController.text) ?? 0.0,
                         category: selectedExpenseCategory,
                         date: DateTime.now(),
-                        personalAccount: selectedAccount!),
-                  );
-                } else {
-                  // Save income
-                  await expensesDb.insertIncome(
-                    Income(
+                        personalAccount: selectedAccount!,
+                      ),
+                    );
+                  } else {
+                    await expensesDb.insertIncome(
+                      Income(
                         title: titleController.text,
                         amount: double.tryParse(amountController.text) ?? 0.0,
                         date: DateTime.now(),
                         category: selectedIncomeCategory,
-                        personalAccount: selectedAccount!),
-                  );
+                        personalAccount: selectedAccount!,
+                      ),
+                    );
+                  }
                 }
 
                 // Optionally, you can navigate back to the previous screen after saving

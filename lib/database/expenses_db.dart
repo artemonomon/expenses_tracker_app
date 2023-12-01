@@ -64,11 +64,19 @@ class ExpensesAppDb {
   Future<void> insertExpense(Expense expense) async {
     final db = await DatabaseService().database;
     await db.insert(expensesTableName, expense.toMap());
+    await db.rawQuery('''UPDATE $personalAccountsTableName
+      SET balance = balance - ${expense.amount}
+      WHERE id = ${expense.personalAccount.id}
+    ''');
   }
 
   Future<void> insertIncome(Income income) async {
     final db = await DatabaseService().database;
     await db.insert(incomeTableName, income.toMap());
+    await db.rawQuery('''UPDATE $personalAccountsTableName
+      SET balance = balance + ${income.amount}
+      WHERE id = ${income.personalAccount.id}
+    ''');
   }
 
   Future<List<Expense>> getExpenses() async {
@@ -154,21 +162,33 @@ class ExpensesAppDb {
     );
   }
 
-  Future<void> deleteExpense(String expenseId) async {
+  Future<void> deleteExpense(int expenseId) async {
     final db = await DatabaseService().database;
     await db.delete(
       expensesTableName,
       where: 'id = ?',
       whereArgs: [expenseId],
     );
+    await db.rawQuery(
+      '''UPDATE $personalAccountsTableName
+      SET balance = balance + (SELECT amount FROM $expensesTableName WHERE id = $expenseId)
+      WHERE id = (SELECT personal_account_id FROM $expensesTableName WHERE id = $expenseId)
+    ''',
+    );
   }
 
-  Future<void> deleteIncome(String incomeId) async {
+  Future<void> deleteIncome(int incomeId) async {
     final db = await DatabaseService().database;
     await db.delete(
       incomeTableName,
       where: 'id = ?',
       whereArgs: [incomeId],
+    );
+    await db.rawQuery(
+      '''UPDATE $personalAccountsTableName
+      SET balance = balance - (SELECT amount FROM $incomeTableName WHERE id = $incomeId)
+      WHERE id = (SELECT personal_account_id FROM $incomeTableName WHERE id = $incomeId)
+    ''',
     );
   }
 
